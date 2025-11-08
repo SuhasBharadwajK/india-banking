@@ -26,7 +26,7 @@ OTP_ENABLED_BANK = [
 ]
 
 
-class BankConnector(Document):
+class BankingBackendConnector(Document):
 	def __init__(self, *args, **kwargs):
 		self.success_count = 0
 		self.failed_count = 0
@@ -727,28 +727,28 @@ class BankConnector(Document):
 			)
 
 
-def get_bank_connector(bank_account, company):
+def get_banking_backend_connector(bank_account, company):
 	# Fetch the connector information
-	bank_connector = frappe.db.exists(
-		"Bank Connector",
+	banking_backend_connector = frappe.db.exists(
+		"Banking Backend Connector",
 		{
 			"company": company,
 			"bank_account": bank_account,
 		},
 	)
-	if not bank_connector:
-		frappe.throw(_("Bank Connector is not initialized"))
+	if not banking_backend_connector:
+		frappe.throw(_("Banking Backend Connector is not initialized"))
 
-	return frappe.get_doc("Bank Connector", bank_connector)
+	return frappe.get_doc("Banking Backend Connector", banking_backend_connector)
 
 
 @frappe.whitelist()
 def make_payment(payment_order, otp=None):
 	payment_order = frappe.get_doc("Payment Order", payment_order)
-	bank_connector = get_bank_connector(
+	banking_backend_connector = get_banking_backend_connector(
 		payment_order.company_bank_account, payment_order.company
 	)
-	return bank_connector.make_post_request(
+	return banking_backend_connector.make_post_request(
 		payment_order, otp=otp, action="initiate_payment"
 	)
 
@@ -756,10 +756,10 @@ def make_payment(payment_order, otp=None):
 @frappe.whitelist()
 def get_payment_status(payment_order, check_processed_payments=False):
 	payment_order = frappe.get_doc("Payment Order", payment_order)
-	bank_connector = get_bank_connector(
+	banking_backend_connector = get_banking_backend_connector(
 		payment_order.company_bank_account, payment_order.company
 	)
-	return bank_connector.make_post_request(
+	return banking_backend_connector.make_post_request(
 		payment_order,
 		action="get_payment_status",
 		check_processed_payments=check_processed_payments,
@@ -769,8 +769,8 @@ def get_payment_status(payment_order, check_processed_payments=False):
 @frappe.whitelist()
 def get_bank_balance(bank_account_name):
 	bank_doc = frappe.get_doc("Bank Account", bank_account_name)
-	bank_connector = get_bank_connector(bank_account_name, bank_doc.company)
-	return bank_connector.get_bank_balance(bank_doc)
+	banking_backend_connector = get_banking_backend_connector(bank_account_name, bank_doc.company)
+	return banking_backend_connector.get_bank_balance(bank_doc)
 
 
 @frappe.whitelist()
@@ -782,8 +782,8 @@ def get_bank_statements(
 	last_tran_id=None,
 ):
 	bank_doc = frappe.get_doc("Bank Account", bank_account_name)
-	bank_connector = get_bank_connector(bank_account_name, bank_doc.company)
-	return bank_connector.get_bank_statements(
+	banking_backend_connector = get_banking_backend_connector(bank_account_name, bank_doc.company)
+	return banking_backend_connector.get_bank_statements(
 		bank_doc,
 		from_date=from_date,
 		to_date=to_date,
