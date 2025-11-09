@@ -4,6 +4,7 @@
  "autoname": "field:bank_account",
  "creation": "2024-04-29 16:50:18.476229",
  "default_view": "List",
+ "description": "Banking Backend refers to the server on which the India Banking server module (india_banking_connector) is installed. A bank-specific connector for the backend instance, registered with the specified bank, can be defined using this connector.",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -11,11 +12,12 @@
   "company",
   "bank_account",
   "bank",
+  "section_break_bqwl",
+  "is_backend_same",
+  "bulk_transaction",
   "url",
-  "column_break_mdgf",
   "api_key",
   "api_secret",
-  "bulk_transaction",
   "payment_configuration_tab",
   "enqueue_large_payments_in_the_background",
   "enqueue_payments_threshold",
@@ -46,28 +48,30 @@
    "unique": 1
   },
   {
+   "depends_on": "eval: !doc.is_backend_same;",
+   "description": "The base URL of the backend server that has a Frappe instance with the india_banking_connector app installed and is registered with the bank. This should include the port number if the backend server is configured to run on a non-standard port other than 80 and 443.",
    "fieldname": "url",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "URL",
-   "reqd": 1
+   "label": "Backend Base URL",
+   "mandatory_depends_on": "eval: !doc.is_backend_same;"
   },
   {
-   "fieldname": "column_break_mdgf",
-   "fieldtype": "Column Break"
-  },
-  {
+   "depends_on": "eval: !doc.is_backend_same;",
+   "description": "The API key of the user or service account that is created on the backend Frappe instance and is used to interact with it. This can be created in the user settings on the backend Frappe instance.",
    "fieldname": "api_key",
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "API Key",
-   "reqd": 1
+   "mandatory_depends_on": "eval: !doc.is_backend_same;"
   },
   {
+   "depends_on": "eval: !doc.is_backend_same;",
+   "description": "The API secret of the user or service account that is created on the backend Frappe instance and is used to interact with it. This can be created in the user settings on the backend Frappe instance along with the API key.",
    "fieldname": "api_secret",
    "fieldtype": "Password",
    "label": "API Secret",
-   "reqd": 1
+   "mandatory_depends_on": "eval: !doc.is_backend_same;"
   },
   {
    "fetch_from": "bank_account.bank",
@@ -78,7 +82,8 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.bank == \"ICICI Bank\"",
+   "depends_on": "eval: doc.bank == \"ICICI Bank\";",
+   "description": "Check this option if bulk transactions should be made through this connector via the selected bank.",
    "fieldname": "bulk_transaction",
    "fieldtype": "Check",
    "label": "Bulk Transaction"
@@ -118,11 +123,23 @@
    "fieldname": "enqueue_payments_threshold",
    "fieldtype": "Int",
    "label": "Enqueue Payments Threshold"
+  },
+  {
+   "fieldname": "section_break_bqwl",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "description": "Select this option if both the frontend and backend apps of India Banking for the selected bank are on the same server.",
+   "fieldname": "is_backend_same",
+   "fieldtype": "Check",
+   "label": "Is Backend Same As Frontend",
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-11-08 12:27:34.407242",
+ "modified": "2025-11-08 14:18:52.333839",
  "modified_by": "Administrator",
  "module": "India Banking",
  "name": "Banking Backend Connector",

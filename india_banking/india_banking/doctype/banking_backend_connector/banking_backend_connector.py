@@ -5,6 +5,7 @@ import ast
 import json
 import math
 import time
+from urllib.parse import urljoin
 
 import frappe
 import requests as request
@@ -20,6 +21,8 @@ from india_banking.utils import (
 	get_bank_address_details,
 	get_party_field_name,
 )
+
+from india_banking.models.banking_backend_response import BankingBackendResponse
 
 OTP_ENABLED_BANK = [
 	("ICICI Bank", 1),  # ICICI Bank, Bulk Transaction
@@ -45,7 +48,14 @@ class BankingBackendConnector(Document):
 
 	@property
 	def connector_url(self):
-		return f"{self.url}/api/method/india_banking_connector.api.connect"
+		if self.url and not self.url.startswith("http"):
+			# If only the hostname is given without the protocol, force HTTPS by default.
+			self.url = f"https://{self.url}"
+
+		connect_method_path = "api/method/india_banking_connector.api.connect"
+
+		# Use urljoin to reliably join to URL fragments.
+		return urljoin(self.url, connect_method_path)
 
 	def check_otp_enabled(self, otp=None):
 		if (self.bank, self.bulk_transaction) in OTP_ENABLED_BANK and otp is None:
@@ -453,17 +463,21 @@ class BankingBackendConnector(Document):
 	def generate_otp(self, payment_order):
 		payment_order.reload()
 
-		# Generate OTP using POST request
-		response = request.post(
-			self.connector_url,
-			headers=self.headers,
-			data=json.dumps(self.get_payload(payment_order, "generate_otp")),
-		)
+		# response = request.post(
+		# 	self.connector_url,
+		# 	headers=self.headers,
+		# 	data=json.dumps(),
+		# )
+
+		payload = self.get_payload(payment_order, "generate_otp")
+
+		# Request the India Banking Backend to Generate OTP
+		response = self.request_backend(payload, "Generate Otp", payment_order.doctype, payment_order.name)
 
 		# create api response log
-		create_api_log(
-			response, "Generate Otp", payment_order.doctype, payment_order.name
-		)
+		# create_api_log(
+		# 	response, "Generate Otp", payment_order.doctype, payment_order.name
+		# )
 		# handle failed or success response
 		return self.handle_otp_response(response)
 
@@ -725,6 +739,40 @@ class BankingBackendConnector(Document):
 				msg=_("Statement Fetch Failed"),
 				indicator="red",
 			)
+
+	def request_backend(self, payload, action_name, source_doc_type, meta_data) -> BankingBackendResponse:
+		backend_response = BankingBackendResponse()
+		if self.is_backend_same and "Payment Manager" in frappe.get_roles():
+			error = { "status": "", "message": None }
+			try:
+				connect = frappe.get_attr("india_banking_connector.api.connect")
+				result = connect(**payload)
+				backend_response.ok = True
+				backend_response.status_code = 200
+				backend_response.message = result
+			except AttributeError as e:
+				error["message"] = "The India Banking backend module is not installed on this server instance."
+			except Exception as e:
+				error["message"] = frappe.get_traceback()
+
+			if not backend_response.message:
+				backend_response.message = error
+
+		else:
+			response = request.post(
+				self.connector_url, headers=self.headers, data=json.dumps(payload)
+			)
+
+			backend_response.ok = response.ok
+			backend_response.status_code = response.status_code
+			backend_response.message = response.json().get("message")
+
+			# create api request log
+			create_api_log(
+				response, action_name, source_doc_type, meta_data
+			)
+
+		return backend_response
 
 
 def get_banking_backend_connector(bank_account, company):
