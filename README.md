@@ -8,7 +8,7 @@ Currently, this integration is available with select Indian banks, and it is acc
 
 The ERPNext banking payment flow and necessary customizations are handled within the India Banking app, which connects to the available server-side apps. 
 
-Due to strict bank security requirements (static IPs, certificates, and specific environments), the server-side app structure is essential. 
+Due to strict bank security requirements (static IPs, certificates, and specific environments), the server-side app structure is essential. This scheme is detailed in the usage section.
 
 ### Deployment Options
 
@@ -48,6 +48,28 @@ Due to strict bank security requirements (static IPs, certificates, and specific
 ### Kotak Mahindra Bank
 - **Transfers**: IMPS, NEFT, RTGS, A2A (Single API with and without portal authorization).
 - **Encryption**: AES, RSA.
+
+## Usage
+[TEMP]
+### Entities
+- Client Side:
+	- Banking Backend Connector
+	- India Banking Settings - Connector maps
+- Server Side:
+	- Bank-specific connectors
+	- Bank API endpoint for each action
+
+- Action list
+	 - get_otp
+
+[/TEMP]
+
+The India Banking application has two modules: server-side and client-side. The source code in this repository contains the client-side module. This might be confusing at the first glance but the client-server nomenclature is to distinguish the systems involved for API communincation with the banks.
+
+
+### Server
+
+### Client
 
 ## Future Plans
 
