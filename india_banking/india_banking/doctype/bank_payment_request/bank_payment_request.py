@@ -8,7 +8,6 @@ from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
 from erpnext.accounts.doctype.payment_request import payment_request as PR
 from erpnext.accounts.doctype.payment_request.payment_request import (
 	PaymentRequest,
-	get_existing_payment_request_amount,
 )
 from erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category import (
 	get_party_tax_withholding_details,
