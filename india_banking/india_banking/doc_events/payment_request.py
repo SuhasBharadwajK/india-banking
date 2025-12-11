@@ -1,8 +1,9 @@
 import frappe
 from erpnext.accounts.doctype.payment_request.payment_request import (
-	get_existing_payment_request_amount,
 	make_payment_request,
 )
+
+from india_banking.india_banking.doctype.bank_payment_request.bank_payment_request import get_existing_payment_request_amount
 
 
 @frappe.whitelist()
