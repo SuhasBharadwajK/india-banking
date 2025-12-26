@@ -369,6 +369,7 @@ frappe.ui.form.on("Payment Order", {
 				references: frm.doc.references,
 				company_bank_account: frm.doc.company_bank_account,
 				summarise_payment_based_on: frm.doc.summarise_payment_based_on,
+				default_mode_of_transfer: frm.doc.default_mode_of_transfer,
 			},
 			freeze: true,
 			callback: function (r) {
