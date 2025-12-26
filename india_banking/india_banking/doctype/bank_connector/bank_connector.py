@@ -593,12 +593,17 @@ class BankConnector(Document):
 						"bank_balance",
 						response_details.balance,
 					)
+
+				return { "bank_balance": response_details.balance, "is_success": True }
+
 			else:
 				frappe.msgprint(
 					title=_("API Failed"),
 					msg=_("Balance Fetch Failed"),
 					indicator="red",
 				)
+
+				return { "bank_balance": None, "is_success": False }
 
 	def process_bank_payment_requests(self, payment_order, summary):
 		payment_order.reload()
@@ -736,6 +741,22 @@ def get_payment_status(payment_order):
 		payment_order.company_bank_account, payment_order.company
 	)
 	return bank_connector.make_post_request(payment_order, action="get_payment_status")
+
+@frappe.whitelist()
+def get_balanace_for_dashboard(bank_account_name):
+	bank_balance_res = get_bank_balance(bank_account_name)
+	if bank_balance_res["is_success"]:
+		balance = bank_balance_res["bank_balance"]
+		return {
+			"value": balance,
+			"fieldtype": "Currency"
+		}
+
+	else:
+		return {
+			"value": "API Error",
+			"fieldtype": "Data"
+		}
 
 
 @frappe.whitelist()
