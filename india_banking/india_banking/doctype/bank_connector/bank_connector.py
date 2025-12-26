@@ -749,7 +749,8 @@ def get_balanace_for_dashboard(bank_account_name):
 		balance = bank_balance_res["bank_balance"]
 		return {
 			"value": balance,
-			"fieldtype": "Currency"
+			"fieldtype": "Currency",
+			"route": [f"bank-account/{bank_account_name}"]
 		}
 
 	else:
