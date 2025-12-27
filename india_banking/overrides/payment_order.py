@@ -248,7 +248,9 @@ def get_party_summary(
 	summarise_payment_based_on=None,
 	default_mode_of_transfer=None,
 ):
-	references = json.loads(references)
+	if isinstance(references, str):
+		references = json.loads(references)
+	
 	if not len(references) or not company_bank_account:
 		return
 
@@ -267,8 +269,11 @@ def get_party_summary(
 
 	summary = {}
 	for reference in references:
-		reference = frappe._dict(reference)
+		reference = frappe._dict(reference.as_dict()) if hasattr(reference, 'as_dict') else frappe._dict(reference)
 		key = _get_unique_key(reference)
+		for item in key:
+			if not item:
+				item = ''
 
 		if key in summary:
 			summary[key]["amount"] += reference.amount
