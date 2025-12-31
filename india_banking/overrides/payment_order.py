@@ -131,7 +131,7 @@ class CustomPaymentOrder(PaymentOrder):
 			"Journal Entry",
 		]:
 			if self.payment_order_type == "Payment Request":
-				make_payment_entries(self.name)
+				make_payment_entries(self.name, False)
 
 			self.update_payment_status()
 

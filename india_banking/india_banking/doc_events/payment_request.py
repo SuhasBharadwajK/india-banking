@@ -11,11 +11,18 @@ from india_banking.overrides.payment_order import get_party_summary
 @frappe.whitelist()
 def make_bulk_bank_payment_request(invoices, doctype):
 	# TODO MAHI: If the currrent user is anyone apart from Mahi Admin, the system should throw an exception right here and stop any further execution.
+
 	invoices = frappe.parse_json(invoices)
+
+	for invoice in invoices:
+		if invoice.get('amount_to_pay', 0) > invoice.get('outstanding_amount', 0) or invoice.get('amount_to_pay', 0) <= 0:
+			frappe.throw('The provided amounts to pay are invalid.')
+
 	success_requests = []
 	no_payment_invoices = []
 	for invoice in invoices:
 		if invoice.get("name", ""):
+			invoice_amount_to_pay = invoice.get('amount_to_pay', 0)
 			invoice = frappe.get_doc(doctype, invoice.get("name", ""))
 			if not is_valid_invoice(invoice):
 				no_payment_invoices.append(invoice.name)
@@ -27,6 +34,7 @@ def make_bulk_bank_payment_request(invoices, doctype):
 					"dn": invoice.name,
 					"recipient_id": "",
 					"payment_request_type": "Outward",
+					"amount_to_pay": invoice_amount_to_pay,
 					"party_type": "Supplier",
 					"party": invoice.supplier,
 					"return_doc": 1,
