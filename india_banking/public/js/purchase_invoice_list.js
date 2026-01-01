@@ -3,7 +3,8 @@ const pi_onload = frappe.listview_settings["Purchase Invoice"].onload;
 frappe.listview_settings["Purchase Invoice"].onload = function (listview) {
 	pi_onload(listview);
 	listview.page.add_action_item(__("Payment Order"), () => {
-		create_bulk_request(listview, "Purchase Invoice");
+		let checked_items = listview.get_checked_items();
+		show_bulk_payment_dialog(checked_items, false, "Purchase Invoice", listview);
 	});
 
 	listview.page.add_inner_button(__("GoTo Payment Request"), () => {
@@ -11,19 +12,8 @@ frappe.listview_settings["Purchase Invoice"].onload = function (listview) {
 	});
 };
 
-const create_bulk_request = function (listview, doctype) {
-	let checked_items = listview.get_checked_items();
-	const selected_names = [];
-	checked_items.forEach((Item) => {
-		if (Item.docstatus == 0) {
-			selected_names.push(Item.name);
-		}
-	});
 
-	show_payments_dialog(checked_items, selected_names, doctype, listview);
-};
-
-const show_payments_dialog = function (selected_invoices, selected_names, doctype, listview) {
+const show_bulk_payment_dialog = function (selected_invoices, enable_multi_select = false, doctype = "Purchase Invoice", listview = null) {
 	for (const invoice of selected_invoices) {
 		invoice.amount_to_pay = invoice.outstanding_amount;
 	}
@@ -70,7 +60,8 @@ const show_payments_dialog = function (selected_invoices, selected_names, doctyp
 		],
 		primary_action_label: __("Create Payment Order"),
 		primary_action: function (values) {
-			confirm_bulk_payment(values.payment_requests, selected_names, doctype, dialog, listview);
+			invoices_to_select = values.payment_requests.filter(r => !enable_multi_select || r.__checked);
+			confirm_bulk_payment(invoices_to_select, doctype, dialog, listview);
 		},
 		secondary_action_label: __("Cancel"),
 		secondary_action: function () {
@@ -82,12 +73,16 @@ const show_payments_dialog = function (selected_invoices, selected_names, doctyp
 	dialog.$wrapper.css('z-index', '1040');
 
 	dialog.show();
-	setTimeout(() => {
-		$('.row-check').hide();
-	}, 200);
+
+	if (!enable_multi_select) {
+		setTimeout(() => {
+			$('.row-check').hide();
+		}, 200);
+	}
 };
 
-const confirm_bulk_payment = function (invoices, selected_names, doctype, dialog, listview) {
+
+const confirm_bulk_payment = function (invoices, doctype, dialog, listview) {
 	invalid_invoices = []
 	for (const invoice of invoices) {
 		if (invoice.amount_to_pay > invoice.outstanding_amount || invoice.amount_to_pay <= 0) {
@@ -103,12 +98,14 @@ const confirm_bulk_payment = function (invoices, selected_names, doctype, dialog
 		return;
 	}
 
+	draft_invoices = invoices.filter(i => i.docstatus == 0).map(i => i.name);
+
 	count_of_rows = invoices.length;
 	total_amount = invoices.reduce((total, invoice) => total + invoice.amount_to_pay, 0);
 	frappe.confirm(
 		__("Are you sure you want to create a Payment Order for <b style=\"color: green;\">{0}</b> for <b style=\"color: #1167b1\">{1}</b> {2}?", [fmt_money(total_amount), count_of_rows, count_of_rows == 1 ? __("Purchase Invoice") : __("Purchase Invoices")]),
 		() => {
-			if (selected_names.length == 0) {
+			if (draft_invoices.length == 0) {
 				frappe
 					.call({
 						method:
@@ -118,7 +115,9 @@ const confirm_bulk_payment = function (invoices, selected_names, doctype, dialog
 					.then((r) => {
 						dialog.hide();
 						show_confirmation_message(r);
-						listview.render_list();
+						if (listview) {
+							listview.refresh();
+						}
 					});
 				// if (count_of_rows > 10) {
 				//   frappe.show_alert("Starting a background job to create {0} {1}", [
@@ -133,6 +132,7 @@ const confirm_bulk_payment = function (invoices, selected_names, doctype, dialog
 	);
 };
 
+
 const show_confirmation_message = function (r) {
 	const request_count = r.message.success_request;
 	const po_name = r.message.payment_order;
@@ -145,6 +145,7 @@ const show_confirmation_message = function (r) {
 	}
 };
 
+
 const show_invalid_invoices_alert = function (invalid_invoices) {
 	const message = generate_validation_table(invalid_invoices);
 
@@ -152,6 +153,7 @@ const show_invalid_invoices_alert = function (invalid_invoices) {
 		title  = message,
 	)
 };
+
 
 const generate_validation_table = function (invalid_invoices) {
 	let html = '<table  class="table table-condensed table-hover table-bordered">';
@@ -168,3 +170,5 @@ const generate_validation_table = function (invalid_invoices) {
 	html += '</table>';
 	return html;
 };
+
+frappe.show_bulk_payment_dialog = show_bulk_payment_dialog;
