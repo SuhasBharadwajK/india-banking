@@ -266,6 +266,9 @@ class BankConnector(Document):
 										"reference_date": summary.payment_date,
 									},
 								)
+
+								pe = frappe.get_doc("Payment Entry", summary.payment_entry)
+								pe.submit()
 							if summary.journal_entry_account:
 								frappe.db.set_value(
 									"Journal Entry Account",
@@ -333,8 +336,13 @@ class BankConnector(Document):
 							payment_entry_doc = frappe.get_doc(
 								"Payment Entry", summary.payment_entry
 							)
-							if payment_entry_doc.docstatus == 1:
-								payment_entry_doc.cancel()
+
+							# Since the Payment Entries are in Draft mode when a Payment Order
+							# is created, they need to be Submitted before they can be Cancelled.
+							if payment_entry_doc.docstatus != 1:
+								payment_entry_doc.submit()
+
+							payment_entry_doc.cancel()
 
 						if summary.journal_entry_account:
 							frappe.db.set_value(

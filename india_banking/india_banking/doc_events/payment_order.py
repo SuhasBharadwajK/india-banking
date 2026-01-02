@@ -55,7 +55,7 @@ def process_payment_requests(payment_order_summary):
 
 
 @frappe.whitelist()
-def make_payment_entries(docname):
+def make_payment_entries(docname, submit_entries = True):
 	def _append_reference(
 		pe, reference, reference_amount, allocated_amount=None, payment_term=None
 	):
@@ -239,7 +239,8 @@ def make_payment_entries(docname):
 		group_by_invoices(pe)
 
 		pe.insert(ignore_permissions=True, ignore_mandatory=True)
-		pe.submit()
+		if submit_entries:
+			pe.submit()
 
 		# add payment entry reference in summary row
 		frappe.db.set_value("Payment Order Summary", row.name, "payment_entry", pe.name)
