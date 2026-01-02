@@ -20,7 +20,7 @@ const show_bulk_payment_dialog = function (selected_invoices, enable_multi_selec
 
 	const dialog = new frappe.ui.Dialog({
 		title: __("Payment Confirmation"),
-		size: 'large',
+		size: 'extra-large',
 		fields: [
 			{
 				fieldname: 'payment_requests',
@@ -37,7 +37,15 @@ const show_bulk_payment_dialog = function (selected_invoices, enable_multi_selec
 						fieldtype: "Data",
 						read_only: true,
 						in_list_view: 1,
-						columns: 4,
+						columns: 2,
+					},
+					{
+						fieldname: "supplier",
+						label: __("Supplier"),
+						fieldtype: "Data",
+						read_only: true,
+						in_list_view: 1,
+						columns: 2,
 					},
 					{
 						fieldname: "outstanding_amount",
