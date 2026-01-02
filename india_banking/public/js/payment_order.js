@@ -259,12 +259,14 @@ frappe.ui.form.on("Payment Order", {
 			const has_initiated_or_non_pending = frm.doc.summary.some(
 				(item) =>
 					item.payment_status === "Initiated" ||
-					item.payment_status !== "Pending"
+					item.payment_status === "Failed" ||
+					item.payment_status === "Rejected" ||
+					item.payment_status === "On Hold" 
 			);
 
 			if (has_initiated_or_non_pending) {
 				frm.dashboard.add_comment(
-					"Payment is already initiated. Check the status using the 'Get Status' button before trying again.",
+					__("Payment is already initiated. Check the status using the 'Get Status' button before trying again."),
 					permanent = false
 				);
 				frm.add_custom_button(__("Get Status"), () => {
