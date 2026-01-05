@@ -57,7 +57,7 @@ def make_bulk_bank_payment_request(invoices, doctype, should_create_payment_orde
 
 	po_name = None
 
-	if create_payment_order and len(success_requests):
+	if should_create_payment_order and len(success_requests):
 		# Create a payment order with the submitted payment requests.
 		payment_order = create_payment_order(invoices, success_requests)
 		po_name = payment_order.name
